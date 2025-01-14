@@ -1,9 +1,9 @@
 psycopg2-binary
 python-dotenv
+cryptography
 sqlalchemy
 ipeadatapy
 jupyterlab
 notebook
 requests
 pandas
-bcrypt

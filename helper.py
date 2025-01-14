@@ -1,3 +1,4 @@
+from cryptography.fernet import Fernet
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
 from datetime import datetime
@@ -5,8 +6,10 @@ from ipeadatapy import *
 import requests as req
 import pandas as pd
 import getpass
-import bcrypt
 import os
+
+datamaster_user_username = ""
+datamaster_user_password = ""
 
 
 ### TERRITORIO E POPULACAO RURAL
@@ -145,6 +148,68 @@ def get_engine():
     database_url = f'postgresql+psycopg2://{db_user}:{db_password}@localhost:5432/{db_name}'
     return create_engine(database_url)
 
+def user_auth():
+    global datamaster_user_username
+    global datamaster_user_password
+    load_dotenv()
+    fernet_key = os.getenv('FERNET_KEY')
+    cipher_suite = Fernet(fernet_key)
+    invitation_hash = os.getenv('SIGN_UP_PASSWORD')
+    engine = get_engine()
+
+    def user_registry():
+        global datamaster_user_username
+        global datamaster_user_password
+        sign_up = input("Do you want to sign up (y/n): ").lower().strip() == "y"
+        if sign_up and (getpass.getpass("Please enter your invitation: ") == invitation_hash):
+            datamaster_user_username = input("Please enter your username: ")
+            datamaster_user_password = getpass.getpass("Please enter your password: ")
+            hashed_datamaster_user_password = cipher_suite.encrypt(datamaster_user_password.encode()).decode()
+            df = pd.DataFrame({'USERNAME': datamaster_user_username, 'PASSWORD': [hashed_datamaster_user_password]})
+            try:
+                query = 'SELECT * FROM users WHERE "USERNAME"=%s'
+                existing_users = pd.read_sql(query, engine, params=(datamaster_user_username,))
+                if not existing_users.empty:
+                    print("Username already taken")
+                    datamaster_user_username = ""
+                    datamaster_user_password = ""
+                    return False
+                else:
+                    df.to_sql('users', engine, if_exists='append', index=False) 
+                    return True
+            except:
+                df.to_sql('users', engine, if_exists='append', index=False)
+                return True
+
+    query = " SELECT table_name FROM information_schema.tables WHERE table_schema='public'"
+    tables_df = pd.read_sql(query, engine)
+    table_list = tables_df['table_name'].tolist()
+    try:
+        if ("users" in table_list):
+            if datamaster_user_username!='':
+                query = 'SELECT * FROM users WHERE "USERNAME"=%s'
+                df = pd.read_sql(query, engine, params=(datamaster_user_username,))
+                dehashed_datamaster_user_password = cipher_suite.decrypt((df['PASSWORD'][0]).encode()).decode()
+                if datamaster_user_password!='' and df.shape[0]!=0 and (datamaster_user_password==dehashed_datamaster_user_password):
+                    return True
+                else:
+                    return user_registry()
+            else:
+                datamaster_user_username = input("Please enter your username: ")
+                datamaster_user_password = getpass.getpass("Please enter your password: ")
+                query = 'SELECT * FROM users WHERE "USERNAME"=%s'
+                df = pd.read_sql(query, engine, params=(datamaster_user_username,))
+                if df.shape[0]!=0 and (datamaster_user_password==cipher_suite.decrypt((df['PASSWORD'][0]).encode()).decode()):
+                    return True
+                else:
+                    return user_registry()
+        else:
+            return user_registry()
+    except:
+        datamaster_user_username = ""
+        datamaster_user_password = ""
+        return user_registry()
+
 
 # Search for the table components in the dictionaries.
 def find_value_in_dicts(key): 
@@ -158,6 +223,19 @@ def find_value_in_dicts(key):
                     if key == sub_key: 
                         return sub_value 
     return "Key not found in any dictionary"
+
+# Verify if key is valid.
+def verify_key_in_dicts(key): 
+    dicts = [dict_territorio, serie_agro, serie_pecuaria, serie_credito] 
+    for dictionary in dicts: 
+        for sub_key, sub_value in dictionary.items(): 
+            if isinstance(sub_value, dict): 
+                if key in sub_value: 
+                    return True 
+                else: 
+                    if key == sub_key: 
+                        return True 
+    return False
 
 
 # Iterate through the received dictionary to pull all the components needed from the API, 
@@ -262,73 +340,47 @@ def standardize_data(df):
 # pull all the related data from the source, clean it,
 # create a table for it, then return the DataFrame.
 def get_data(table, year=None):
-    engine = get_engine()
-    start_time = datetime.today()
-    try:
-        time1 = datetime.today()
-        print(f"Loading table: {table}")
-        if year!=None:
-            query = f'SELECT * FROM {table} WHERE "YEAR"={year}'
+    if user_auth():
+        check_table = verify_key_in_dicts(table)
+        check_year = (year==None or isinstance(year, int))
+        if check_table and check_year:
+            engine = get_engine()
+            start_time = datetime.today()
+            try:
+                time1 = datetime.today()
+                print(f"Loading table: {table}")
+                if year!=None and isinstance(year, int):
+                    query = f'SELECT * FROM {table} WHERE "YEAR"={year}'
+                else:
+                    query = f"SELECT * FROM {table}" 
+                df =  pd.read_sql(query, engine)
+                time2 = datetime.today()
+                print(f"Loaded in {time2 - time1}")
+                print(f"Finished in {time2 - start_time}")
+                return df
+            except:
+                print(f"Table {table} could not be loaded")
+                df = mount_table(find_value_in_dicts(table))
+                time1 = datetime.today()
+                print(f"Saving table: {table}")
+                df.to_sql(f'{table}', engine, if_exists='replace', index=False)
+                print(f"{table} saved!")
+                time2 = datetime.today()
+                print(f"Table saved {df.shape[0]} rows in {time2 - time1}")
+                print(f"Finished in {time2 - start_time}")
+                if year!=None:
+                    df[df['YEAR']==year]
+                return df
         else:
-            query = f"SELECT * FROM {table}" 
-        df =  pd.read_sql(query, engine)
-        time2 = datetime.today()
-        print(f"Loaded in {time2 - time1}")
-        print(f"Finished in {time2 - start_time}")
-        return df
-    except:
-        print(f"Table {table} could not be loaded")
-        df = mount_table(find_value_in_dicts(table))
-        time1 = datetime.today()
-        print(f"Saving table: {table}")
-        df.to_sql(f'{table}', engine, if_exists='replace', index=False)
-        print(f"{table} saved!")
-        time2 = datetime.today()
-        print(f"Table saved {df.shape[0]} rows in {time2 - time1}")
-        print(f"Finished in {time2 - start_time}")
-        if year!=None:
-            df[df['YEAR']==year]
-        return df
+            if not check_table:
+                print("Invalid table name")
+            if not check_year:
+                print("Invalid year (must be a number)")
+    else:
+        print("User not logged-in")
+            
 
 
-# Encrypts data
-def anonymize_data(data):
-    salt = bcrypt.gensalt()
-    hashed_data = bcrypt.hashpw(data.encode('utf-8'), salt)
-    return hashed_data
-
-
-# Verify encrypted data
-def verify_encryption(input_data, hashed_data):
-    return bcrypt.checkpw(input_data.encode('utf-8'), hashed_data)
-
-
-
-
-
-#
-# def user_auth():
-#     try:
-#         engine = get_engine()
-#         try:
-#             user_password = user_password
-#         except:
-#             query = f'SELECT * FROM users WHERE "USERNAME"="{user_username}"'
-#             df = pd.read_sql(query, engine)
-#             user_password = df['PASSWORD']
-#         if verify_data(user_password, user_password):
-#     except:
-#         print("User not logged in")
-#         sign_up = input("Do you want to sign up (y/n): ").lower().strip() == 'y'
-#         if sign_up:
-#             user_username = input("Please enter your username: ")
-#             user_password = anonymize_data(getpass.getpass("Please enter your password: "))
-#         else:
-#             pass
-
-
-    
-    #colocar verificacao no inicio de cada funcao para ver se usuario esta logado, na funcao de input, perguntar ao usuario se deseja fazer login ou cadastrar, adicionar um hash encriptado para servir de "convite" antes de liberar cadastro, salvar uma tabela com usuario e senha hasheada entre o input e o armazenamento em variavel
 
 
 
