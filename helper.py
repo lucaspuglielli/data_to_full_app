@@ -367,7 +367,7 @@ def get_data(table, year=None):
             try:
                 time1 = datetime.today()
                 print(f"Loading table: {table}")
-                if year!=None and isinstance(year, int):
+                if year!=None:
                     query = f'SELECT * FROM {table} WHERE "YEAR"={year}'
                 else:
                     query = f"SELECT * FROM {table}" 
@@ -387,7 +387,7 @@ def get_data(table, year=None):
                 print(f"Table saved {df.shape[0]} rows in {time2 - time1}")
                 print(f"Finished in {time2 - start_time}")
                 if year!=None:
-                    df[df['YEAR']==year]
+                    df = df[df['YEAR']==year]
                 return df
         else:
             if not check_table:
