@@ -6,6 +6,7 @@ from ipeadatapy import *
 import requests as req
 import pandas as pd
 import getpass
+import redis
 import os
 
 datamaster_user_username = ""
@@ -147,10 +148,19 @@ def get_engine():
     db_name = os.getenv('POSTGRES_DB')
     database_url = f'postgresql+psycopg2://{db_user}:{db_password}@localhost:5432/{db_name}'
     return create_engine(database_url)
+    
+# Create the redis connection
+def get_redis():
+    return redis.Redis(host='localhost', port=6379, db=0)
 
 def user_auth():
-    global datamaster_user_username
-    global datamaster_user_password
+    r = get_redis()
+    try:
+        datamaster_user_username = r.get('datamaster_user_username').decode('utf-8')
+        datamaster_user_password = r.get('datamaster_user_password').decode('utf-8')
+    except:
+        datamaster_user_username = ""
+        datamaster_user_password = ""
     load_dotenv()
     fernet_key = os.getenv('FERNET_KEY')
     cipher_suite = Fernet(fernet_key)
@@ -158,8 +168,6 @@ def user_auth():
     engine = get_engine()
 
     def user_registry():
-        global datamaster_user_username
-        global datamaster_user_password
         sign_up = input("Do you want to sign up (y/n): ").lower().strip() == "y"
         if sign_up and (getpass.getpass("Please enter your invitation: ") == invitation_hash):
             datamaster_user_username = input("Please enter your username: ")
@@ -173,15 +181,21 @@ def user_auth():
                     print("Username already taken")
                     datamaster_user_username = ""
                     datamaster_user_password = ""
+                    r.set('datamaster_user_username', datamaster_user_username)
+                    r.set('datamaster_user_password', datamaster_user_password)
                     return False
                 else:
-                    df.to_sql('users', engine, if_exists='append', index=False) 
+                    df.to_sql('users', engine, if_exists='append', index=False)
+                    r.set('datamaster_user_username', datamaster_user_username)
+                    r.set('datamaster_user_password', datamaster_user_password)
                     return True
             except:
                 df.to_sql('users', engine, if_exists='append', index=False)
+                r.set('datamaster_user_username', datamaster_user_username)
+                r.set('datamaster_user_password', datamaster_user_password)
                 return True
 
-    query = " SELECT table_name FROM information_schema.tables WHERE table_schema='public'"
+    query = "SELECT table_name FROM information_schema.tables WHERE table_schema='public'"
     tables_df = pd.read_sql(query, engine)
     table_list = tables_df['table_name'].tolist()
     try:
@@ -200,6 +214,8 @@ def user_auth():
                 query = 'SELECT * FROM users WHERE "USERNAME"=%s'
                 df = pd.read_sql(query, engine, params=(datamaster_user_username,))
                 if df.shape[0]!=0 and (datamaster_user_password==cipher_suite.decrypt((df['PASSWORD'][0]).encode()).decode()):
+                    r.set('datamaster_user_username', datamaster_user_username)
+                    r.set('datamaster_user_password', datamaster_user_password)
                     return True
                 else:
                     return user_registry()
@@ -208,6 +224,8 @@ def user_auth():
     except:
         datamaster_user_username = ""
         datamaster_user_password = ""
+        r.set('datamaster_user_username', datamaster_user_username)
+        r.set('datamaster_user_password', datamaster_user_password)
         return user_registry()
 
 
