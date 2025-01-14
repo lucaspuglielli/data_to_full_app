@@ -9,9 +9,6 @@ import getpass
 import redis
 import os
 
-datamaster_user_username = ""
-datamaster_user_password = ""
-
 
 ### TERRITORIO E POPULACAO RURAL
 
@@ -145,13 +142,19 @@ def get_engine():
     load_dotenv()
     db_user = os.getenv('POSTGRES_USER')
     db_password = os.getenv('POSTGRES_PASSWORD')
+    db_host = os.getenv('POSTGRES_HOST')
+    db_port = os.getenv('POSTGRES_PORT')
     db_name = os.getenv('POSTGRES_DB')
-    database_url = f'postgresql+psycopg2://{db_user}:{db_password}@localhost:5432/{db_name}'
+    database_url = f'postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}'
     return create_engine(database_url)
     
 # Create the redis connection
 def get_redis():
-    return redis.Redis(host='localhost', port=6379, db=0)
+    load_dotenv()
+    redis_host = os.getenv('REDIS_HOST')
+    redis_port = os.getenv('REDIS_PORT')
+    redis_db = os.getenv('REDIS_DB')
+    return redis.Redis(host=redis_host, port=redis_port, db=redis_db)
 
 def user_auth():
     r = get_redis()
