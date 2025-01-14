@@ -23,14 +23,24 @@ Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
 ```plaintext
 POSTGRES_USER=docker
 POSTGRES_PASSWORD=docker
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
 POSTGRES_DB=datamaster
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_DB=0
 FERNET_KEY=chave_de_fernet
 SIGN_UP_PASSWORD=senha_de_convite
 ```
 
 - **`POSTGRES_USER`**: Nome de usuário do PostgreSQL.  
 - **`POSTGRES_PASSWORD`**: Senha do PostgreSQL.  
-- **`POSTGRES_DB`**: Nome do banco de dados principal.  
+- **`POSTGRES_HOST`**: Host do PostgreSQL.  
+- **`POSTGRES_PORT`**: Port do PostgreSQL.  
+- **`POSTGRES_DB`**: Nome do banco de dados PostgreSQL.  
+- **`REDIS_HOST`**: Host do Redis.  
+- **`REDIS_PORT`**: Port do Redis.  
+- **`REDIS_DB`**: Nome do banco de dados redis.  
 - **`FERNET_KEY`**: Chave para criptografia de senhas (use uma chave gerada pela biblioteca `cryptography`).  
 - **`SIGN_UP_PASSWORD`**: Senha de convite para registro de novos usuários.  
 
