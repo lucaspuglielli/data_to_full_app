@@ -157,6 +157,6 @@ graph TD
 
     I --> F
 
-    style F fill:#b3ffb3,stroke:#2d8659,stroke-width:2px
-    style J fill:#ffcccc,stroke:#b30000,stroke-width:2px
+    style F fill:#b3ffb3,stroke:#2d8659,stroke-width:2px,color:#000000
+    style J fill:#ffcccc,stroke:#b30000,stroke-width:2px,color:#000000
 ```
