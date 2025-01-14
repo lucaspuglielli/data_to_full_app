@@ -40,7 +40,7 @@ SIGN_UP_PASSWORD=senha_de_convite
 - **`POSTGRES_DB`**: Nome do banco de dados PostgreSQL.  
 - **`REDIS_HOST`**: Host do Redis.  
 - **`REDIS_PORT`**: Port do Redis.  
-- **`REDIS_DB`**: Nome do banco de dados redis.  
+- **`REDIS_DB`**: Nome do banco de dados Redis.  
 - **`FERNET_KEY`**: Chave para criptografia de senhas (use uma chave gerada pela biblioteca `cryptography`).  
 - **`SIGN_UP_PASSWORD`**: Senha de convite para registro de novos usuários.  
 
