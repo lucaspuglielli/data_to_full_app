@@ -18,9 +18,6 @@ services:
       - '6379:6379'
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
-    volumes:
-      - ./redis_data:/bitnami/redis
 
 volumes:
   postgres_data:
-  redis_data:
