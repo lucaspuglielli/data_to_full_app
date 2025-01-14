@@ -140,12 +140,12 @@ serie_credito = {
 # Create the engine needed for database connection
 def get_engine(): 
     load_dotenv()
-    db_user = os.getenv('POSTGRES_USER')
-    db_password = os.getenv('POSTGRES_PASSWORD')
-    db_host = os.getenv('POSTGRES_HOST')
-    db_port = os.getenv('POSTGRES_PORT')
-    db_name = os.getenv('POSTGRES_DB')
-    database_url = f'postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}'
+    postgres_user = os.getenv('POSTGRES_USER')
+    postgres_password = os.getenv('POSTGRES_PASSWORD')
+    postgres_host = os.getenv('POSTGRES_HOST')
+    postgres_port = os.getenv('POSTGRES_PORT')
+    postgres_db = os.getenv('POSTGRES_DB')
+    database_url = f'postgresql+psycopg2://{postgres_user}:{postgres_password}@{postgres_host}:{postgres_port}/{postgres_db}'
     return create_engine(database_url)
     
 # Create the redis connection
