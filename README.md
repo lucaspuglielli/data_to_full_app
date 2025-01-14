@@ -1,5 +1,113 @@
 # README
 
+### Requisitos
+
+Antes de configurar o ambiente, certifique-se de que as ferramentas abaixo estão instaladas:
+
+1. **Python 3.8+**  
+   - [Download Python](https://www.python.org/downloads/)  
+   - **Nota para usuários Windows**: Durante a instalação, habilite a opção de adicionar Python ao PATH nas variáveis de ambiente na tela inicial do instalador.
+
+2. **Docker**  
+   - [Download Docker](https://docs.docker.com/get-started/get-docker/)  
+   - Certifique-se de que o Docker esteja em execução antes de subir os serviços.
+
+---
+
+### Configuração do Ambiente
+
+#### 1. Configurar Variáveis de Ambiente
+
+Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
+
+```plaintext
+POSTGRES_USER=docker
+POSTGRES_PASSWORD=docker
+POSTGRES_DB=datamaster
+FERNET_KEY=chave_de_fernet
+SIGN_UP_PASSWORD=senha_de_convite
+```
+
+- **`POSTGRES_USER`**: Nome de usuário do PostgreSQL.  
+- **`POSTGRES_PASSWORD`**: Senha do PostgreSQL.  
+- **`POSTGRES_DB`**: Nome do banco de dados principal.  
+- **`FERNET_KEY`**: Chave para criptografia de senhas (use uma chave gerada pela biblioteca `cryptography`).  
+- **`SIGN_UP_PASSWORD`**: Senha de convite para registro de novos usuários.  
+
+---
+
+#### 2. Executar Script de Inicialização
+
+Execute o script `run.bat` para configurar o ambiente automaticamente. Ele realiza as seguintes etapas:
+
+1. Criação de um ambiente virtual Python (`.venv`).
+2. Ativação do ambiente virtual e instalação das dependências definidas em `requirements.txt`.
+3. Inicialização dos serviços Docker (PostgreSQL e Redis).
+4. Abertura do Jupyter Notebook com o arquivo `main.ipynb`.
+5. Finalização dos serviços Docker ao encerrar o processo.
+
+---
+
+#### 3. Inicialização Manual
+
+Se o script `run.bat` não puder ser executado, siga estas etapas manualmente:
+
+##### Criar o Ambiente Virtual
+
+```bash
+python -m venv .venv
+```
+
+##### Ativar o Ambiente Virtual
+
+Windows:
+```bash
+.venv\Scripts\activate
+```
+
+Mac OS/Linux:
+```bash
+source .venv/bin/activate
+```
+
+##### Instalar Dependências
+
+```bash
+pip install -r requirements.txt
+```
+
+##### Subir os Serviços Docker
+
+**Nota:** Certifique-se de que o Docker esteja em execução antes de executar este comando.
+
+```bash
+docker-compose up -d
+```
+
+##### Abrir o Jupyter Notebook
+
+Para acessar a interface padrão:
+```bash
+jupyter notebook "main.ipynb"
+```
+
+Para acessar a interface completa (JupyterLab):
+```bash
+jupyter-lab "main.ipynb"
+```
+
+##### Finalizar os Serviços Docker (Quando Encerrar a Aplicação)
+
+```bash
+docker-compose down
+```
+
+##### Desativar o Ambiente Virtual (Quando Encerrar a Aplicação)
+
+```bash
+deactivate
+```
+
 ## I. Objetivo do Case
 
 O objetivo deste case é desenvolver uma solução completa para manipulação, análise e armazenamento de dados relacionados ao setor agropecuário e rural. A solução deve ser modular, escalável e reprodutível, utilizando tecnologias modernas como Python, Docker e bancos de dados relacionais. Além disso, a aplicação deve permitir autenticação segura, integração com APIs externas e demonstração de funcionalidades interativas através de Jupyter Notebook.
