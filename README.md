@@ -1,162 +1,111 @@
-# Projeto de Análise de Dados Agropecuários
+# README
 
-Este projeto foi desenvolvido para facilitar a manipulação, análise e visualização de dados relacionados ao setor agropecuário e rural. Ele utiliza ferramentas como Jupyter Notebook, Docker e Python para criar um ambiente eficiente e reprodutível.
+## I. Objetivo do Case
 
-## Estrutura do Projeto
+O objetivo deste case é desenvolver uma solução completa para manipulação, análise e armazenamento de dados relacionados ao setor agropecuário e rural. A solução deve ser modular, escalável e reprodutível, utilizando tecnologias modernas como Python, Docker e bancos de dados relacionais. Além disso, a aplicação deve permitir autenticação segura, integração com APIs externas e demonstração de funcionalidades interativas através de Jupyter Notebook.
 
--  **`helper.py`**: Script Python auxiliar contendo funções para autenticação, acesso a dados, e integração com APIs e banco de dados.
+---
 
--  **`main.ipynb`**: Notebook principal que importa o conteúdo de `helper.py` e fornece exemplos de uso das funcionalidades disponíveis.
+## II. Arquitetura de Solução e Arquitetura Técnica
 
--  **`.env`**: Arquivo para configuração de variáveis de ambiente (incluído no repositório apenas para facilitar a apresentação, em um cenário normal isso não deve acontecer).
+### Arquitetura de Solução
 
--  **`requirements.txt`**: Lista de dependências Python do projeto.
+A solução é composta por três camadas principais, cada uma projetada para cumprir uma função específica:
 
--  **`docker-compose.yml`**: Configuração de serviços Docker, como PostgreSQL e Redis.
+1. **Camada de Apresentação**:
+   - **Jupyter Notebook**: Interface principal para interação com os dados e demonstração das funcionalidades implementadas.
+   - Exemplos práticos para ilustrar o uso do script auxiliar `helper.py`.
 
--  **`run.bat`**: Script para inicializar o ambiente e executar o Jupyter Notebook.
+2. **Camada de Aplicação**:
+   - **`helper.py`**: Script Python que contém a lógica de negócios, incluindo:
+   - Autenticação de usuários com senhas criptografadas.
+   - Manipulação de dados agropecuários utilizando APIs externas.
+   - Integração com o banco de dados PostgreSQL para persistência de dados.
 
-## Requisitos
-### Certifique-se de que você tem as seguintes ferramentas instaladas:
+3. **Camada de Dados**:
+   - **PostgreSQL**: Banco de dados relacional utilizado para armazenar dados processados e informações de usuários.
+   - **Redis**: Configurado como sistema de cache para gerenciamento de sessão de usuário.
 
--  **Python 3.8+**
+---
 
-https://www.python.org/downloads/
+### Arquitetura Técnica
 
- Windows: certifique-se de habilitar a criação do path para o script do python nas variáveis de ambiente na primeira tela do instalador.
+A arquitetura técnica define como os componentes da solução interagem para entregar as funcionalidades esperadas.
 
--  **Docker**
+#### Componentes Principais:
 
-https://docs.docker.com/get-started/get-docker/
+- **Docker Compose**:
+  - Gerencia os serviços de infraestrutura, como PostgreSQL e Redis, garantindo a portabilidade do ambiente.
+- **Python**:
+  - Linguagem utilizada para o desenvolvimento do script `helper.py`, que centraliza a lógica de negócios.
+- **Jupyter Notebook**:
+  - Ferramenta interativa para demonstrar o uso da aplicação e explorar os dados processados.
+- **APIs Externas**:
+  - Dados obtidos através de bibliotecas como `ipeadatapy`.
 
-## Configuração do Ambiente
-### 1. Configurar Variáveis de Ambiente
+#### Fluxo de Execução:
 
-Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
+1. O ambiente é inicializado utilizando o script `run.bat`, que realiza:
+   - Configuração do ambiente virtual Python.
+   - Instalação de dependências.
+   - Inicialização dos serviços Docker.
+   - Abertura do Jupyter Notebook para interação.
+2. Usuário autentica e acessa os dados armazenados no banco PostgreSQL ou obtém novos dados via APIs externas.
+3. Dados processados são demonstrados no Jupyter Notebook com exemplos práticos de uso.
 
-**`POSTGRES_USER=docker`**
+#### Tecnologias Utilizadas:
 
-**`POSTGRES_PASSWORD=docker`**
+- **Python 3.8+**: Lógica de aplicação e manipulação de dados.
+- **Docker**: Infraestrutura escalável para banco de dados e cache.
+- **PostgreSQL**: Banco de dados relacional para persistência.
+- **Redis**: Gerenciamento de sessão do usuário.
+- **Bibliotecas Python**: `pandas`, `sqlalchemy`, `cryptography`, `ipeadatapy`, entre outras.
 
-**`POSTGRES_DB=datamaster`**
+---
 
-**`FERNET_KEY=chave_de_fernet`**
+## III. Explicação sobre o Case Desenvolvido
 
-**`SIGN_UP_PASSWORD=senha_de_convite`**
+Este projeto fornece um ambiente integrado para trabalhar com dados agropecuários e rurais.  
 
-### 2. Executar Script de Inicialização do Projeto
+### Funcionalidades Implementadas:
 
-Execute o script `run.bat` para configurar automaticamente o ambiente. Ele realiza os seguintes passos:
+1. **Autenticação Segura**:
+   - Sistema de login e registro utilizando PostgreSQL, senhas criptografadas com a biblioteca `cryptography` e gerenciamento de sessão utilizando Redis.
+   - Suporte para múltiplos usuários e verificação de credenciais.
 
-1. Cria um ambiente virtual Python (`.venv`).
+2. **Manipulação de Dados**:
+   - Integração com APIs para obter dados atualizados.
+   - Estruturação de dados em tabelas relacionais e manipulação com `pandas`.
 
-2. Ativa o ambiente virtual e instala as dependências listadas em `requirements.txt`.
+3. **Interface Interativa**:
+   - O `main.ipynb` fornece exemplos detalhados para explorar e visualizar os dados.
+   - Explicação passo a passo para cada funcionalidade, incluindo acesso ao banco de dados e consultas personalizadas.
 
-3. Inicializa os serviços Docker necessários (PostgreSQL e Redis).
+4. **Infraestrutura Automatizada**:
+   - Uso de `Docker Compose` para configurar e gerenciar serviços como PostgreSQL e Redis.
+   - Script `run.bat` para automação do setup do ambiente.
 
-4. Abre o Jupyter Notebook com o arquivo `main.ipynb`.
+---
 
-5. Finaliza os serviços Docker ao encerrar o processo.
+## IV. Melhorias e Considerações Finais
 
-### 3. Inicializar Manualmente (Caso não seja possível executar o arquivo run.bat)
+### Melhorias:
 
-#### Criar o ambiente virtual
-`python -m venv .venv`
+1. **Otimização de Performance**:
+   - Implementar uso efetivo do Redis como cache para consultas frequentes, reduzindo o tempo de resposta.
+   - Paralelizar operações de consulta e processamento de dados para melhorar a eficiência.
 
-#### Ativar o ambiente virtual
-Windows:
-`.venv\Scripts\activate`
-Mac OS/Linux:
-`source .venv/bin/activate`
+2. **Interface Amigável**:
+   - Expandir o `main.ipynb` com mais exemplos interativos e visualizações gráficas usando bibliotecas como `matplotlib` ou `seaborn`.
 
-#### Instalar dependências
-`pip install -r requirements.txt`
+3. **Documentação e Testes**:
+   - Adicionar testes unitários para funções críticas no script `helper.py`.
+   - Melhorar a documentação detalhando as APIs utilizadas e o formato dos dados esperados.
 
-#### Subir os serviços Docker
-lembre-se de estar com o docker aberto antes de executar esse comando
-`docker-compose up -d`
+4. **Expansão de Funcionalidades**:
+   - Implementar suporte para múltiplas fontes de dados.
+   - Adicionar um painel interativo usando frameworks como `Dash` ou `Streamlit`.
 
-#### Abrir o Jupyter Notebook
-troque "jupyter notebook" por "jupyter-lab" para acessar a interface completa
-`jupyter notebook "main.ipynb"`
+### Considerações Finais:
 
-#### Finalizar serviços Docker (apenas quando quiser encerrar a aplicação)
-`docker-compose down`
-
-#### Desativar o ambiente virtual (apenas quando quiser encerrar a aplicação)
-`deactivate`
-
-## Funcionalidades
-
-### O `helper.py` oferece as seguintes funcionalidades:
-
-#### Autenticação de Usuários:
-
-Registro e login utilizando um banco de dados PostgreSQL com senhas criptografadas e Redis para gerenciamento de sessão.
-
-#### Integração com APIs:
-
-Consulta de dados agropecuários usando bibliotecas como ipeadatapy.
-
-#### Gerenciamento de Dados:
-
-Criação e manipulação de tabelas de dados com pandas e integração com bancos de dados PostgreSQL.
-
-#### Visualização de Dados:
-
-Exemplos no Jupyter Notebook mostram como acessar e manipular os dados de forma prática.
-
-## Dependências
-
-As principais bibliotecas usadas no projeto estão listadas em requirements.txt, incluindo:
-
-- `psycopg2-binary` para conexão com PostgreSQL.
-
-- `cryptography` para criptografia de senhas.
-
-- `sqlalchemy` para ORM e consultas ao banco de dados.
-
-- `ipeadatapy` para acessar dados de APIs.
-
-- `jupyterlab` e `notebook` para interface interativa.
-
-## Estrutura do Docker
-
-O arquivo docker-compose.yml configura os seguintes serviços:
-
-- `PostgreSQL`: Banco de dados para armazenamento de informações.
-
-- `Redis`: Sistema de cache para gerenciamento de sessão.
-
-## Uso
-
-#### Se estiver no Windows, execute o script run.bat para iniciar o projeto.
-
-Caso contrário,
-
-#### Siga o passo a passo do item 3 de Configuração do Ambiente
-
-## Autenticação
-
-```mermaid
-graph TD
-    A[Início] --> B[Carregar variáveis de ambiente e chaves de criptografia]
-    B --> C{Tabela 'users' existe no banco de dados?}
-    C -->|Sim| D{Credenciais fornecidas?}
-    C -->|Não| G[Registrar novo usuário]
-    
-    D -->|Sim| E{Credenciais válidas?}
-    D -->|Não| G
-
-    E -->|Sim| F[Autenticação bem-sucedida]
-    E -->|Não| G
-
-    G --> H{Convite válido e nome de usuário único?}
-    H -->|Sim| I[Registrar usuário no banco de dados]
-    H -->|Não| J[Falha no registro]
-
-    I --> F
-
-    style F fill:#b3ffb3,stroke:#2d8659,stroke-width:2px,color:#000000
-    style J fill:#ffcccc,stroke:#b30000,stroke-width:2px,color:#000000
-```
+Este projeto demonstra como criar uma solução modular e reprodutível para manipulação de dados complexos. Sua arquitetura escalável permite fácil adaptação para diferentes casos de uso. Com melhorias incrementais, ele pode se tornar uma ferramenta ainda mais poderosa para análises.
