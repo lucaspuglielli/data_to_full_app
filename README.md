@@ -223,6 +223,7 @@ Este projeto fornece um ambiente integrado para trabalhar com dados agropecuári
 4. **Expansão de Funcionalidades**:
    - Implementar suporte para múltiplas fontes de dados.
    - Adicionar um painel interativo usando frameworks como `Dash` ou `Streamlit`.
+   - Adicionar funções para requisitar e salvar todas as tabelas disponíveis nos catalogos e de homologação dos dados de todas as tabelas geradas.
 
 ### Considerações Finais:
 
