@@ -225,6 +225,9 @@ Este projeto fornece um ambiente integrado para trabalhar com dados agropecuári
    - Adicionar um painel interativo usando frameworks como `Dash` ou `Streamlit`.
    - Adicionar funções para requisitar e salvar todas as tabelas disponíveis nos catalogos e de homologação dos dados de todas as tabelas geradas.
 
+5. **Aumento de Segurança**:
+   - Separar a tabela de informações de login dos usuários do banco de dados principal.
+
 ### Considerações Finais:
 
 Este projeto demonstra como criar uma solução modular e reprodutível para manipulação de dados complexos. Sua arquitetura escalável permite fácil adaptação para diferentes casos de uso. Com melhorias incrementais, ele pode se tornar uma ferramenta ainda mais poderosa para análises.
