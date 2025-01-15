@@ -10,7 +10,7 @@ import redis
 import os
 
 
-### TERRITORIO E POPULACAO RURAL
+### TERRITORY AND RURAL POPULATION
 
 dict_territorio = {
     "territorio":{
@@ -18,10 +18,11 @@ dict_territorio = {
     }
 }
 
-### AGROPECUARIA
 
-serie_agro = {
-    "agro_valores_totais":{
+### AGRICULTURE AND LIVESTOCK
+
+serie_agricultura = {
+    "agricultura_valores_totais":{
         "lavoura_total(ha)":'AREAPLATOT',
         "lavoura_temporaria(ha)":'AREAPLATEMP',
         "lavoura_permanente(ha)":'AREAPLAPERM',
@@ -73,7 +74,8 @@ serie_pecuaria = {
     "ovos_de_galinha":{"quantidade":'QUANTOVOGALINHA',"valor":'VALOROVOGALINHA',},
 }
 
-### CREDITO RURAL
+
+### RURAL FINANCING
 
 serie_credito = {
     "credito_rural_geral":{
@@ -116,6 +118,7 @@ serie_credito = {
     },
 }
 
+
 # Send a request to the API, select the response value, 
 # and return it as a pandas DataFrame.
 # def api_request(url):
@@ -147,7 +150,8 @@ def get_engine():
     postgres_db = os.getenv('POSTGRES_DB')
     database_url = f'postgresql+psycopg2://{postgres_user}:{postgres_password}@{postgres_host}:{postgres_port}/{postgres_db}'
     return create_engine(database_url)
-    
+
+
 # Create the redis connection
 def get_redis():
     load_dotenv()
@@ -156,6 +160,8 @@ def get_redis():
     redis_db = os.getenv('REDIS_DB')
     return redis.Redis(host=redis_host, port=redis_port, db=redis_db)
 
+
+# Runs user authentication
 def user_auth():
     r = get_redis()
     try:
@@ -234,7 +240,7 @@ def user_auth():
 
 # Search for the table components in the dictionaries.
 def find_value_in_dicts(key): 
-    dicts = [dict_territorio, serie_agro, serie_pecuaria, serie_credito] 
+    dicts = [dict_territorio, serie_agricultura, serie_pecuaria, serie_credito] 
     for dictionary in dicts: 
         for sub_key, sub_value in dictionary.items(): 
             if isinstance(sub_value, dict): 
@@ -245,9 +251,10 @@ def find_value_in_dicts(key):
                         return sub_value 
     return "Key not found in any dictionary"
 
+
 # Verify if key is valid.
 def verify_key_in_dicts(key): 
-    dicts = [dict_territorio, serie_agro, serie_pecuaria, serie_credito] 
+    dicts = [dict_territorio, serie_agricultura, serie_pecuaria, serie_credito] 
     for dictionary in dicts: 
         for sub_key, sub_value in dictionary.items(): 
             if isinstance(sub_value, dict): 
@@ -279,7 +286,7 @@ def mount_table(dict_of_files):
             if merged_df is None:
                 if key=='populacao_rural':
                     merged_df = territories()
-                    merged_df.rename(columns={'AREA': 'AREA(M2)'}, inplace=True)
+                    merged_df.rename(columns={'AREA': 'AREA(KM2)'}, inplace=True)
                     merged_df = merged_df[merged_df['NAME'] != '(não definido)']
                 else:
                     merged_df = territories()[['NAME', 'ID', 'LEVEL']]
@@ -306,7 +313,7 @@ def standardize_data(df):
         'TERCODIGO': str,
         'LEVEL': str,
         'YEAR': int,
-        'AREA(M2)': float,
+        'AREA(KM2)': float,
         'POPULACAO_RURAL': int,
         'AREA(HA)': float,
         'LAVOURA_TOTAL(HA)': float,
@@ -342,7 +349,7 @@ def standardize_data(df):
     for column, dtype in type_mappings.items():
         if column in df.columns:
             df[column] = df[column].astype(dtype)
-            # area_list = ['AREA(M2)', 
+            # area_list = ['AREA(KM2)', 
             #              'AREA(HA)', 
             #              'LAVOURA_TOTAL(HA)', 
             #              'LAVOURA_TEMPORARIA(HA)',
@@ -354,7 +361,6 @@ def standardize_data(df):
             if dtype == float and column not in area_list:
                 df[column] = df[column].round(2)
     return df
-
 
 
 # Try to get the table from the database. If it doesn't exist,
@@ -399,11 +405,3 @@ def get_data(table, year=None):
                 print("Invalid year (must be a number)")
     else:
         print("User not logged-in")
-            
-
-
-
-
-
-
-    
