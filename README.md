@@ -217,7 +217,7 @@ Este projeto fornece um ambiente integrado para trabalhar com dados agropecuári
    - Expandir o `main.ipynb` com mais exemplos interativos e visualizações gráficas usando bibliotecas como `matplotlib` ou `seaborn`.
 
 3. **Documentação e Testes**:
-   - Adicionar testes unitários para funções críticas no script `helper.py`.
+   - Adicionar mais testes unitários para as demais funções no script `helper.py`.
    - Melhorar a documentação detalhando as APIs utilizadas e o formato dos dados esperados.
 
 4. **Expansão de Funcionalidades**:
