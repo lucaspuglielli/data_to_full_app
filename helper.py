@@ -167,75 +167,127 @@ def user_auth():
     try:
         datamaster_user_username = r.get('datamaster_user_username').decode('utf-8')
         datamaster_user_password = r.get('datamaster_user_password').decode('utf-8')
-    except:
+    except Exception as e:
+        print(f"Exception while getting data from Redis: {e}")  # Debug statement
         datamaster_user_username = ""
         datamaster_user_password = ""
     load_dotenv()
     fernet_key = os.getenv('FERNET_KEY')
     cipher_suite = Fernet(fernet_key)
     invitation_hash = os.getenv('SIGN_UP_PASSWORD')
-    engine = get_engine()
+    postgres_user = os.getenv('POSTGRES_USER')
+    postgres_password = os.getenv('POSTGRES_PASSWORD')
+    postgres_host = os.getenv('POSTGRES_HOST')
+    postgres_port = os.getenv('POSTGRES_PORT')
+    postgres_auth_db = os.getenv('POSTGRES_AUTH_DB')
+    print(fernet_key)
+    print(invitation_hash)
+    print(postgres_user)
+    print(postgres_password)
+    print(postgres_port)
+    print(postgres_host)
+    print(postgres_auth_db)
+    auth_database_url = f'postgresql+psycopg2://{postgres_user}:{postgres_password}@{postgres_host}:{postgres_port}/{postgres_auth_db}'
+    auth_engine = create_engine(auth_database_url)
 
     def user_registry():
-        sign_up = input("Do you want to sign up (y/n): ").lower().strip() == "y"
-        if sign_up and (getpass.getpass("Please enter your invitation: ") == invitation_hash):
+        print("@#@#@#@#@#@#@#@#@#@#@#@#@#@#10")
+        sign_up_input = input("Do you want to sign up (y/n): ")
+        print(f"Sign-up Input Captured: {sign_up_input}")  # Debug statement
+        sign_up = sign_up_input.lower().strip() == "y"
+        print(f"Sign-up: {sign_up}")  # Debug statement
+        print("@#@#@#@#@#@#@#@#@#@#@#@#@#@#11")
+        if sign_up and (input("Please enter your invitation: ") == invitation_hash):
+            print("@#@#@#@#@#@#@#@#@#@#@#@#@#@#12")
             datamaster_user_username = input("Please enter your username: ")
-            datamaster_user_password = getpass.getpass("Please enter your password: ")
+            datamaster_user_password = input("Please enter your password: ")
             hashed_datamaster_user_password = cipher_suite.encrypt(datamaster_user_password.encode()).decode()
-            df = pd.DataFrame({'USERNAME': datamaster_user_username, 'PASSWORD': [hashed_datamaster_user_password]})
+            df = pd.DataFrame({'USERNAME': [datamaster_user_username], 'PASSWORD': [hashed_datamaster_user_password]})
+            print("@#@#@#@#@#@#@#@#@#@#@#@#@#@#13")
             try:
+                print("@#@#@#@#@#@#@#@#@#@#@#@#@#@#14")
+                print("Checking if username exists...")  # Debug statement
                 query = 'SELECT * FROM users WHERE "USERNAME"=%s'
-                existing_users = pd.read_sql(query, engine, params=(datamaster_user_username,))
+                existing_users = pd.read_sql(query, auth_engine, params=(datamaster_user_username,))
+                print(f"Existing users: {existing_users}")  # Debug statement
+                print("@#@#@#@#@#@#@#@#@#@#@#@#@#@#15")
                 if not existing_users.empty:
+                    print("@#@#@#@#@#@#@#@#@#@#@#@#@#@#16")
                     print("Username already taken")
                     datamaster_user_username = ""
                     datamaster_user_password = ""
                     r.set('datamaster_user_username', datamaster_user_username)
                     r.set('datamaster_user_password', datamaster_user_password)
+                    print("@#@#@#@#@#@#@#@#@#@#@#@#@#@#17")
                     return False
                 else:
-                    df.to_sql('users', engine, if_exists='append', index=False)
+                    print("@#@#@#@#@#@#@#@#@#@#@#@#@#@#18")
+                    print("Username available, signing up...")  # Debug statement
+                    df.to_sql('users', auth_engine, if_exists='append', index=False)
                     r.set('datamaster_user_username', datamaster_user_username)
                     r.set('datamaster_user_password', datamaster_user_password)
+                    print("@#@#@#@#@#@#@#@#@#@#@#@#@#@#19")
                     return True
-            except:
-                df.to_sql('users', engine, if_exists='append', index=False)
+            except Exception as e:
+                print("@#@#@#@#@#@#@#@#@#@#@#@#@#@#20")
+                print(f"Exception during sign-up: {e}")  # Debug statement
+                df.to_sql('users', auth_engine, if_exists='append', index=False)
                 r.set('datamaster_user_username', datamaster_user_username)
                 r.set('datamaster_user_password', datamaster_user_password)
+                print("@#@#@#@#@#@#@#@#@#@#@#@#@#@#21")
                 return True
 
     query = "SELECT table_name FROM information_schema.tables WHERE table_schema='public'"
-    tables_df = pd.read_sql(query, engine)
+    tables_df = pd.read_sql(query, auth_engine)
     table_list = tables_df['table_name'].tolist()
+    print(table_list)
     try:
+        print("Checking if 'users' table exists in the list...")  # Debug statement
         if ("users" in table_list):
-            if datamaster_user_username!='':
+            print("Found 'users' table in the list")  # Debug statement
+            if datamaster_user_username != '':
+                print("@#@#@#@#@#@#@#@#@#@#@#@#@#@#1")
                 query = 'SELECT * FROM users WHERE "USERNAME"=%s'
-                df = pd.read_sql(query, engine, params=(datamaster_user_username,))
+                df = pd.read_sql(query, auth_engine, params=(datamaster_user_username,))
                 dehashed_datamaster_user_password = cipher_suite.decrypt((df['PASSWORD'][0]).encode()).decode()
-                if datamaster_user_password!='' and df.shape[0]!=0 and (datamaster_user_password==dehashed_datamaster_user_password):
+                print("@#@#@#@#@#@#@#@#@#@#@#@#@#@#2")
+                if datamaster_user_password != '' and df.shape[0] != 0 and (datamaster_user_password == dehashed_datamaster_user_password):
+                    print("@#@#@#@#@#@#@#@#@#@#@#@#@#@#3")
                     return True
                 else:
+                    print("@#@#@#@#@#@#@#@#@#@#@#@#@#@#4")
                     return user_registry()
             else:
+                print("@#@#@#@#@#@#@#@#@#@#@#@#@#@#5")
                 datamaster_user_username = input("Please enter your username: ")
-                datamaster_user_password = getpass.getpass("Please enter your password: ")
+                print(f"Username entered: {datamaster_user_username}")  # Debug statement
+                datamaster_user_password = input("Please enter your password: ")
+                print(f"Password entered: {datamaster_user_password}")  # Debug statement
                 query = 'SELECT * FROM users WHERE "USERNAME"=%s'
-                df = pd.read_sql(query, engine, params=(datamaster_user_username,))
-                if df.shape[0]!=0 and (datamaster_user_password==cipher_suite.decrypt((df['PASSWORD'][0]).encode()).decode()):
+                df = pd.read_sql(query, auth_engine, params=(datamaster_user_username,))
+                print("@#@#@#@#@#@#@#@#@#@#@#@#@#@#6")
+                if df.shape[0] != 0 and (datamaster_user_password == cipher_suite.decrypt((df['PASSWORD'][0]).encode()).decode()):
+                    print("@#@#@#@#@#@#@#@#@#@#@#@#@#@#7")
                     r.set('datamaster_user_username', datamaster_user_username)
                     r.set('datamaster_user_password', datamaster_user_password)
+                    print("@#@#@#@#@#@#@#@#@#@#@#@#@#@#8")
                     return True
                 else:
+                    print("@#@#@#@#@#@#@#@#@#@#@#@#@#@#9")
                     return user_registry()
         else:
+            print("No 'users' table found, calling user_registry...")  # Debug statement
             return user_registry()
-    except:
+    except Exception as e:
+        print(f"Exception: {e}")  # Debug statement
         datamaster_user_username = ""
         datamaster_user_password = ""
         r.set('datamaster_user_username', datamaster_user_username)
         r.set('datamaster_user_password', datamaster_user_password)
         return user_registry()
+
+
+
 
 
 # Search for the table components in the dictionaries.
