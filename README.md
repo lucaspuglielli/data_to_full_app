@@ -143,6 +143,36 @@ A solução é composta por três camadas principais, cada uma projetada para cu
 3. **Camada de Dados**:
    - **PostgreSQL**: Banco de dados relacional utilizado para armazenar dados processados e informações de usuários.
    - **Redis**: Configurado como sistema de cache para gerenciamento de sessão de usuário.
+  
+```mermaid
+graph LR
+    A[Usuário] --> B[Camada de Apresentação]
+    B -->|Interação com Dados| C[Camada de Aplicação]
+    C -->|Persistência de Dados| D[Camada de Dados]
+
+    subgraph "Camada de Apresentação"
+        B1[Jupyter Notebook]
+    end
+
+    subgraph "Camada de Aplicação"
+        C1[helper.py]
+        C2[Autenticação]
+        C3[Manipulação de Dados]
+        C4[Integração com APIs]
+    end
+
+    subgraph "Camada de Dados"
+        D1[PostgreSQL]
+        D2[Redis]
+    end
+
+    B --> B1
+    C --> C1 --> C2
+    C1 --> C3
+    C1 --> C4
+    D --> D1
+    D --> D2
+```
 
 ---
 
@@ -169,7 +199,28 @@ A arquitetura técnica define como os componentes da solução interagem para en
    - Inicialização dos serviços Docker.
    - Abertura do Jupyter Notebook para interação.
 2. Usuário autentica e acessa os dados armazenados no banco PostgreSQL ou obtém novos dados via APIs externas.
-3. Dados processados são demonstrados no Jupyter Notebook com exemplos práticos de uso.
+3. Dados processados são demonstrados no Jupyter Notebook com exemplos práticos de uso. 
+
+```mermaid
+graph LR
+
+	subgraph "Ambiente da Aplicação"
+        A[Interface]
+        B[Autenticação]
+        C[Banco de Dados]
+        D[APIs Externas]
+        E{Dado Existe?}
+	end
+        F[Inicialização]
+
+    F -->|Script| A
+    B -->|Busca de Dados| C
+    E -->|Não - Envio de Requisição| D
+    C --> E
+    A -->|Solicita Acesso aos Dados| B
+    E -->|Sim - Retorno de Dados| A
+    D -->|Fornecimento de Dados| C
+```
 
 #### Tecnologias Utilizadas:
 
@@ -183,7 +234,7 @@ A arquitetura técnica define como os componentes da solução interagem para en
 
 ## III. Explicação sobre o Case Desenvolvido
 
-Este projeto fornece um ambiente integrado para trabalhar com dados agropecuários e rurais.  
+Este projeto fornece um ambiente integrado para trabalhar com dados agropecuários e rurais. 
 
 ### Funcionalidades Implementadas:
 
