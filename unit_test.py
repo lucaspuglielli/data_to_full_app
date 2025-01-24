@@ -8,23 +8,22 @@ import pandas as pd
 import os
 
 
-# Generate a valid Fernet key
 fernet_key = Fernet.generate_key().decode()
 
 
 class TestUserAuth(unittest.TestCase):
 
     def setUp(self):
-        # Patch and initialize the mocked Redis instance
         self.mock_redis_patcher = patch('helper.get_redis')
         self.mock_redis = self.mock_redis_patcher.start()
         self.mock_redis_instance = self.mock_redis.return_value
-        self.mock_redis_instance.reset_mock()  # Reset any previous state
+        self.mock_redis_instance.reset_mock()
 
+    
     def tearDown(self):
-        # Stop the patcher after each test
         self.mock_redis_patcher.stop()
 
+    
     @patch('builtins.input', side_effect=["test_user", "wrong_password", "n"])
     @patch('os.getenv', side_effect=lambda k: {
         'FERNET_KEY': fernet_key,
@@ -46,58 +45,47 @@ class TestUserAuth(unittest.TestCase):
             self.mock_redis_instance.set('datamaster_user_password', '')
             self.assertFalse(result, "Expected authentication to fail with incorrect password")
 
+    
     @patch('helper.get_redis')
     @patch('builtins.input', side_effect=[
-        "test_user", "correct_password",  # Inputs for login
-        "y", "datamaster1", "test_user", "correct_password",  # Inputs for sign-up
-        "y", "datamaster1", "new_username", "new_password",  # Additional inputs to satisfy all prompts
+        "test_user", "correct_password",
+        "y", "datamaster1", "test_user", "correct_password",
+        "y", "datamaster1", "new_username", "new_password",
     ])
     @patch('os.getenv', side_effect=lambda k: {
         'FERNET_KEY': fernet_key,
         'SIGN_UP_PASSWORD': 'datamaster1',
-        'POSTGRES_USER': 'username',  # Ensure this matches the expected value
-        'POSTGRES_PASSWORD': 'password',  # Ensure this matches the expected value
+        'POSTGRES_USER': 'username',
+        'POSTGRES_PASSWORD': 'password',
         'POSTGRES_HOST': 'localhost',
         'POSTGRES_PORT': '5432',
         'POSTGRES_AUTH_DB': 'auth_db'
     }.get(k))
-    @patch('sqlalchemy.create_engine')  # Mock SQLAlchemy engine creation
+    @patch('sqlalchemy.create_engine')
     def test_user_registry(self, mock_create_engine, mock_getenv, mock_input, mock_get_redis):
-        # Mock Redis instance
         mock_redis_instance = mock_get_redis.return_value
-        mock_redis_instance.get.side_effect = [
-            None,  # Simulate no existing Redis keys
-            'mocked_password'.encode()  # Simulate encoded password from Redis
-        ]
-        mock_redis_instance.set.return_value = None  # Simulate Redis set
-    
-        # Mock SQLAlchemy engine and connection
+        mock_redis_instance.get.side_effect = [None, 'mocked_password'.encode()]
+        mock_redis_instance.set.return_value = None
+
         mock_engine = MagicMock()
         mock_connection = MagicMock()
         mock_create_engine.return_value = mock_engine
         mock_engine.connect.return_value = mock_connection
-        mock_connection.execute.return_value = None  # Simulate SQL execution
-    
-        # Mock psycopg2 connection
+        mock_connection.execute.return_value = None
+
         with patch('psycopg2.connect') as mock_psycopg2_connect:
             mock_psycopg2_connect.return_value = mock_connection
             mock_connection.cursor.return_value = MagicMock()
-    
-            # Mock pandas.read_sql responses
+
             mock_read_sql_side_effect = [
-                pd.DataFrame({'table_name': ['users']}),  # Mock for table existence check
-                pd.DataFrame(columns=['USERNAME', 'PASSWORD']),  # Mock for user query
+                pd.DataFrame({'table_name': ['users']}),
+                pd.DataFrame(columns=['USERNAME', 'PASSWORD']),
             ]
             with patch('pandas.read_sql', side_effect=mock_read_sql_side_effect):
-                # Call the function under test
                 result = user_auth()
     
-        # Assertions
         mock_redis_instance.set.assert_called_with('datamaster_user_password', '')
         self.assertTrue(result, "Expected authentication to succeed with correct password or after signing up")
-
-
-
 
 
     @patch('builtins.input', side_effect=["test_user", "correct_password"])
@@ -126,6 +114,7 @@ class TestUserAuth(unittest.TestCase):
             self.mock_redis_instance.set('datamaster_user_password', '')
             self.assertTrue(result, "Expected authentication to succeed with correct password")
 
+    
     @patch('builtins.input', side_effect=[str(random.getrandbits(25)), "any_password", "n"])
     @patch('os.getenv', side_effect=lambda k: {
         'FERNET_KEY': fernet_key,

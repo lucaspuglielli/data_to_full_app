@@ -227,7 +227,6 @@ Este projeto fornece um ambiente integrado para trabalhar com dados agropecuári
 
 5. **Aumento de Segurança**:
    - Definir requisitos minimos de segurança para criação de senha.
-   - Separar a tabela de informações de login dos usuários do banco de dados principal.
 
 ### Considerações Finais:
 
