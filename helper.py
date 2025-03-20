@@ -1,5 +1,5 @@
 from cryptography.fernet import Fernet
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from dotenv import load_dotenv
 from datetime import datetime
 from ipeadatapy import *
@@ -174,18 +174,26 @@ def user_auth():
     fernet_key = os.getenv('FERNET_KEY')
     cipher_suite = Fernet(fernet_key)
     invitation_hash = os.getenv('SIGN_UP_PASSWORD')
-    engine = get_engine()
+    postgres_user = os.getenv('POSTGRES_USER')
+    postgres_password = os.getenv('POSTGRES_PASSWORD')
+    postgres_host = os.getenv('POSTGRES_HOST')
+    postgres_port = os.getenv('POSTGRES_PORT')
+    postgres_auth_db = os.getenv('POSTGRES_AUTH_DB')
+    auth_database_url = f'postgresql+psycopg2://{postgres_user}:{postgres_password}@{postgres_host}:{postgres_port}/{postgres_auth_db}'
+    auth_engine = create_engine(auth_database_url)
 
     def user_registry():
-        sign_up = input("Do you want to sign up (y/n): ").lower().strip() == "y"
-        if sign_up and (getpass.getpass("Please enter your invitation: ") == invitation_hash):
+        sign_up_input = input("Do you want to sign up (y/n): ")
+        sign_up = sign_up_input.lower().strip() == "y"
+        if sign_up and (input("Please enter your invitation: ") == invitation_hash):
             datamaster_user_username = input("Please enter your username: ")
-            datamaster_user_password = getpass.getpass("Please enter your password: ")
+            datamaster_user_password = input("Please enter your password: ")
+            # datamaster_user_password = getpass.getpass("Please enter your password: ")
             hashed_datamaster_user_password = cipher_suite.encrypt(datamaster_user_password.encode()).decode()
-            df = pd.DataFrame({'USERNAME': datamaster_user_username, 'PASSWORD': [hashed_datamaster_user_password]})
+            df = pd.DataFrame({'USERNAME': [datamaster_user_username], 'PASSWORD': [hashed_datamaster_user_password]})
             try:
                 query = 'SELECT * FROM users WHERE "USERNAME"=%s'
-                existing_users = pd.read_sql(query, engine, params=(datamaster_user_username,))
+                existing_users = pd.read_sql(query, auth_engine, params=(datamaster_user_username,))
                 if not existing_users.empty:
                     print("Username already taken")
                     datamaster_user_username = ""
@@ -194,35 +202,36 @@ def user_auth():
                     r.set('datamaster_user_password', datamaster_user_password)
                     return False
                 else:
-                    df.to_sql('users', engine, if_exists='append', index=False)
+                    df.to_sql('users', auth_engine, if_exists='append', index=False)
                     r.set('datamaster_user_username', datamaster_user_username)
                     r.set('datamaster_user_password', datamaster_user_password)
                     return True
             except:
-                df.to_sql('users', engine, if_exists='append', index=False)
+                df.to_sql('users', auth_engine, if_exists='append', index=False)
                 r.set('datamaster_user_username', datamaster_user_username)
                 r.set('datamaster_user_password', datamaster_user_password)
                 return True
 
     query = "SELECT table_name FROM information_schema.tables WHERE table_schema='public'"
-    tables_df = pd.read_sql(query, engine)
+    tables_df = pd.read_sql(query, auth_engine)
     table_list = tables_df['table_name'].tolist()
     try:
         if ("users" in table_list):
-            if datamaster_user_username!='':
+            if datamaster_user_username != '':
                 query = 'SELECT * FROM users WHERE "USERNAME"=%s'
-                df = pd.read_sql(query, engine, params=(datamaster_user_username,))
+                df = pd.read_sql(query, auth_engine, params=(datamaster_user_username,))
                 dehashed_datamaster_user_password = cipher_suite.decrypt((df['PASSWORD'][0]).encode()).decode()
-                if datamaster_user_password!='' and df.shape[0]!=0 and (datamaster_user_password==dehashed_datamaster_user_password):
+                if datamaster_user_password != '' and df.shape[0] != 0 and (datamaster_user_password == dehashed_datamaster_user_password):
                     return True
                 else:
                     return user_registry()
             else:
                 datamaster_user_username = input("Please enter your username: ")
-                datamaster_user_password = getpass.getpass("Please enter your password: ")
+                datamaster_user_password = input("Please enter your password: ")
+                # datamaster_user_password = getpass.getpass("Please enter your password: ")
                 query = 'SELECT * FROM users WHERE "USERNAME"=%s'
-                df = pd.read_sql(query, engine, params=(datamaster_user_username,))
-                if df.shape[0]!=0 and (datamaster_user_password==cipher_suite.decrypt((df['PASSWORD'][0]).encode()).decode()):
+                df = pd.read_sql(query, auth_engine, params=(datamaster_user_username,))
+                if df.shape[0] != 0 and (datamaster_user_password == cipher_suite.decrypt((df['PASSWORD'][0]).encode()).decode()):
                     r.set('datamaster_user_username', datamaster_user_username)
                     r.set('datamaster_user_password', datamaster_user_password)
                     return True
@@ -236,6 +245,9 @@ def user_auth():
         r.set('datamaster_user_username', datamaster_user_username)
         r.set('datamaster_user_password', datamaster_user_password)
         return user_registry()
+
+
+
 
 
 # Search for the table components in the dictionaries.
@@ -297,7 +309,7 @@ def mount_table(dict_of_files):
             else:
                 merged_df = merged_df.merge(df, on=['TERCODIGO', 'YEAR'], how='left')
                 merged_df = merged_df.drop_duplicates()
-        except Exception as e:
+        except:
             print(e)
     merged_df = merged_df.fillna(0)
     merged_df = standardize_data(merged_df)
@@ -405,3 +417,68 @@ def get_data(table, year=None):
                 print("Invalid year (must be a number)")
     else:
         print("User not logged-in")
+
+
+# Try to get the table from the database.
+def save_table(df, name):
+    if user_auth():
+        try:
+            if not verify_key_in_dicts(name):
+                engine = get_engine()
+                print(f"Saving table: {name}")
+                df.to_sql(f'{name}', engine, if_exists='replace', index=False)
+            else:
+                print("Table name reserved for API tables")
+        except Exception as e:
+            raise e
+    else:
+        print("User not logged-in")
+
+
+# Try to save the dataframe into the database.
+def load_table(name):
+    if user_auth():
+        try:
+            engine = get_engine()
+            query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
+            tables_db = pd.read_sql(query, engine)
+            available_tables = tables_db["table_name"].tolist()
+            if name in available_tables:
+                print(f"Loading table: {name}")
+                query = f"SELECT * FROM {name}" 
+                return pd.read_sql(query, engine)
+            else:
+                print("Table not available in the database")
+        except Exception as e:
+            raise e
+    else:
+        print("User not logged-in")
+
+
+# import logging
+# logging.basicConfig()
+# logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+
+
+# Try to delete a table from the database.
+def delete_table(name):
+    if user_auth():
+        try:
+            engine = get_engine()
+            query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
+            tables_db = pd.read_sql(query, engine)
+            available_tables = tables_db["table_name"].tolist()
+            if name in available_tables:
+                print(f"Deleting table: {name}")
+                with engine.connect() as connection:
+                    with connection.begin():
+                        connection.execute(text(f'DROP TABLE IF EXISTS "{name}"'))
+                        print("Table deleted")
+            else:
+                print("Table not available in the database")
+        except Exception as e:
+            raise e
+    else:
+        print("User not logged-in")
+
+

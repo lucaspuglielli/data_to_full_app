@@ -245,6 +245,7 @@ Este projeto fornece um ambiente integrado para trabalhar com dados agropecuári
 2. **Manipulação de Dados**:
    - Integração com APIs para obter dados atualizados.
    - Estruturação de dados em tabelas relacionais e manipulação com `pandas`.
+   - Leitura, escrita e exclusão de tabelas do banco de dados.
 
 3. **Interface Interativa**:
    - O `main.ipynb` fornece exemplos detalhados para explorar e visualizar os dados.
@@ -278,7 +279,6 @@ Este projeto fornece um ambiente integrado para trabalhar com dados agropecuári
 
 5. **Aumento de Segurança**:
    - Definir requisitos minimos de segurança para criação de senha.
-   - Separar a tabela de informações de login dos usuários do banco de dados principal.
 
 ### Considerações Finais:
 
