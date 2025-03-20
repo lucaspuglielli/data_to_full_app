@@ -187,7 +187,8 @@ def user_auth():
         sign_up = sign_up_input.lower().strip() == "y"
         if sign_up and (input("Please enter your invitation: ") == invitation_hash):
             datamaster_user_username = input("Please enter your username: ")
-            datamaster_user_password = getpass.getpass("Please enter your password: ")
+            datamaster_user_password = input("Please enter your password: ")
+            # datamaster_user_password = getpass.getpass("Please enter your password: ")
             hashed_datamaster_user_password = cipher_suite.encrypt(datamaster_user_password.encode()).decode()
             df = pd.DataFrame({'USERNAME': [datamaster_user_username], 'PASSWORD': [hashed_datamaster_user_password]})
             try:
@@ -226,7 +227,8 @@ def user_auth():
                     return user_registry()
             else:
                 datamaster_user_username = input("Please enter your username: ")
-                datamaster_user_password = getpass.getpass("Please enter your password: ")
+                datamaster_user_password = input("Please enter your password: ")
+                # datamaster_user_password = getpass.getpass("Please enter your password: ")
                 query = 'SELECT * FROM users WHERE "USERNAME"=%s'
                 df = pd.read_sql(query, auth_engine, params=(datamaster_user_username,))
                 if df.shape[0] != 0 and (datamaster_user_password == cipher_suite.decrypt((df['PASSWORD'][0]).encode()).decode()):

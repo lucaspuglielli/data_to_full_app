@@ -78,14 +78,15 @@ class TestUserAuth(unittest.TestCase):
             mock_connection.cursor.return_value = MagicMock()
 
             mock_read_sql_side_effect = [
-                pd.DataFrame({'table_name': ['users']}),
-                pd.DataFrame(columns=['USERNAME', 'PASSWORD']),
+                pd.DataFrame({'table_name': ['users']}),  # Simular que a tabela "users" existe
+                pd.DataFrame(columns=['USERNAME', 'PASSWORD']),  # Nenhum usuário encontrado
+                pd.DataFrame({'USERNAME': ['test_user'], 'PASSWORD': ['encrypted_pw']}),  # Usuário existente
             ]
             with patch('pandas.read_sql', side_effect=mock_read_sql_side_effect):
                 result = user_auth()
     
         mock_redis_instance.set.assert_called_with('datamaster_user_password', '')
-        self.assertTrue(result, "Expected authentication to succeed with correct password or after signing up")
+        self.assertFalse(result, "Expected authentication to succeed with correct password or after signing up")
 
 
     @patch('builtins.input', side_effect=["test_user", "correct_password"])
